@@ -39,7 +39,7 @@ class RandomImage(AbstractHandler):
     async def handle(app: GraiaMiraiApplication, message: MessageChain, group: Group, member: Member):
         if message.asDisplay() == "来点":
             return await RandomImage.get_image_message()
-        elif n := re.match(r"hso[*=\s]?([0-9]*)?", message.asDisplay()):
+        elif n := re.match(r"hso[*=\s]?([0-9]{0，2})?", message.asDisplay()):
             if n[1]:
                 num = int(n[1])
                 return await RandomImage.get_ten_image(num)
