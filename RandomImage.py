@@ -1,6 +1,8 @@
 import random
 import os
 
+import re
+
 from graia.application import GraiaMiraiApplication
 from graia.application.message.chain import MessageChain
 from graia.application.message.elements.internal import Plain, Image
@@ -13,7 +15,7 @@ from SAGIRIBOT.Handler.Handler import AbstractHandler
 from SAGIRIBOT.MessageSender.MessageItem import MessageItem
 # from SAGIRIBOT.MessageSender.MessageSender import set_result
 from SAGIRIBOT.MessageSender.Strategy import GroupStrategy, Normal, QuoteSource
-from SAGIRIBOT.utils import update_user_call_count_plus1, UserCalledCount
+# from SAGIRIBOT.utils import update_user_call_count_plus1, UserCalledCount
 # from SAGIRIBOT.utils import MessageChainUtils
 from SAGIRIBOT.utils import get_config
 
@@ -36,8 +38,12 @@ class RandomImage(AbstractHandler):
     @staticmethod
     async def handle(app: GraiaMiraiApplication, message: MessageChain, group: Group, member: Member):
         if message.asDisplay() == "来点":
-            await update_user_call_count_plus1(group, member, UserCalledCount.functions, "functions")
             return await RandomImage.get_image_message()
+        elif n := re.match(r"hso[*=\s]?([0-9]*)?", message.asDisplay()):
+            if n[1]:
+                num = int(n[1])
+                return await RandomImage.get_ten_image(num)
+            else: return await RandomImage.get_ten_image()
         else:
             return None
 
@@ -61,6 +67,16 @@ class RandomImage(AbstractHandler):
         path_dir = os.listdir(base_path)
         path = random.sample(path_dir, 1)[0]
         return base_path + path
+
+    @staticmethod
+    async def get_ten_image(num=1):
+        if num <= 10:
+            image_list = []
+            for i in range(num):
+                image = await RandomImage.get_image()
+                image_list.append(image)
+            return MessageItem(MessageChain.create(image_list), Normal(GroupStrategy()))
+        else: return MessageItem(MessageChain.create([Plain(text="要得太多了可不给发的喔(上限是十张)")]), Normal(GroupStrategy()))
 
     @staticmethod
     async def get_image_message():
