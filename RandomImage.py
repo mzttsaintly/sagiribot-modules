@@ -39,17 +39,29 @@ class RandomImage(AbstractHandler):
     async def handle(app: GraiaMiraiApplication, message: MessageChain, group: Group, member: Member):
         if message.asDisplay() == "来点":
             return await RandomImage.get_image_message()
-        elif n := re.match(r"hso[*=\s]?([0-9]{0，2})?", message.asDisplay()):
+        elif n := re.match(r"hso[*=\s]?([0-9]*)?", message.asDisplay()):
             if n[1]:
                 num = int(n[1])
-                return await RandomImage.get_ten_image(num)
-            else: return await RandomImage.get_ten_image()
+                return await RandomImage.get_ten_image(num, "setu")
+            else:
+                return await RandomImage.get_ten_image(1, "setu")
+        elif n := re.match(r"pw[*=\s]?([0-9]*)?", message.asDisplay()):
+            if n[1]:
+                num = int(n[1])
+                return await RandomImage.get_ten_image(num, "wallpaper")
+            else:
+                return await RandomImage.get_ten_image(1, "wallpaper")
         else:
             return None
 
     @staticmethod
-    async def get_image() -> Image:
-        choice_kinds = random.choice(['setu', 'real', 'wallpaper'])
+    async def get_image(kind="setu") -> Image:
+        if kind == "setu":
+            choice_kinds = random.choice(['setu', 'real'])
+        elif kind == "wallpaper":
+            choice_kinds = 'wallpaper'
+        else:
+            choice_kinds = random.choice(['setu', 'real', 'wallpaper'])
         image_path = f"{os.getcwd()}/statics/error/path_not_exists.png"
         if choice_kinds == 'setu':
             base_path = str(get_config("setuPath"))
@@ -69,14 +81,15 @@ class RandomImage(AbstractHandler):
         return base_path + path
 
     @staticmethod
-    async def get_ten_image(num=1):
-        if num <= 10:
+    async def get_ten_image(num=1, kind="setu"):
+        if 0 < num <= 10:
             image_list = []
             for i in range(num):
-                image = await RandomImage.get_image()
+                image = await RandomImage.get_image(kind)
                 image_list.append(image)
             return MessageItem(MessageChain.create(image_list), Normal(GroupStrategy()))
-        else: return MessageItem(MessageChain.create([Plain(text="要得太多了可不给发的喔(上限是十张)")]), Normal(GroupStrategy()))
+        else:
+            return MessageItem(MessageChain.create([Plain(text="要得太多了可不给发的喔(上限是十张)")]), Normal(GroupStrategy()))
 
     @staticmethod
     async def get_image_message():
