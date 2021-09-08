@@ -33,16 +33,18 @@ class Getweath():
 
     @staticmethod
     async def handle(app: GraiaMiraiApplication, message: MessageChain, group: Group, member: Member):
-        if n := re.match(r'^(.?){0,4}天气$', message.asDisplay(), re.I):
-            if n[1]:
-                city_name = str(n[1])
-                return await Getweath.nowweather(city_name)
-            else:
-                return None
-        elif n := re.match(r'^查(.?){0,4}天气$', message.asDisplay(), re.I):
+
+        if n := re.match(r'预报(.*)天气$', message.asDisplay(), re.I):
             if n[1]:
                 city_name = str(n[1])
                 return await Getweath.thirddayweather(city_name)
+            else:
+                return None
+
+        elif n := re.match(r'(.*)天气$', message.asDisplay(), re.I):
+            if n[1]:
+                city_name = str(n[1])
+                return await Getweath.nowweather(city_name)
             else:
                 return None
         else:
