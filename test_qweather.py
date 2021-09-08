@@ -1,52 +1,24 @@
 import re
 import aiohttp
-from aiohttp.client_exceptions import ClientConnectorError, ClientError
+import asyncio
 
-from graia.saya import Saya, Channel
-from graia.application import GraiaMiraiApplication
-from graia.application.message.chain import MessageChain
-from graia.application.message.elements.internal import Plain, Image
-from graia.saya.builtins.broadcast.schema import ListenerSchema
-from graia.application.event.messages import Group, Member, GroupMessage
-from pydantic.class_validators import extract_validators
-
-from SAGIRIBOT.MessageSender.Strategy import Normal
-from SAGIRIBOT.MessageSender.Strategy import GroupStrategy
-from SAGIRIBOT.MessageSender.MessageItem import MessageItem
-from SAGIRIBOT.MessageSender.MessageSender import GroupMessageSender
-from SAGIRIBOT.utils import get_config
-
-saya = Saya.current()
-channel = Channel.current()
-
-api_key = str(get_config("qweather"))
-
-
-@channel.use(ListenerSchema(listening_events=[GroupMessage]))
-async def abbreviated_prediction_handler(app: GraiaMiraiApplication, message: MessageChain, group: Group,
-                                         member: Member):
-    if result := await Getweath.handle(app, message, group, member):
-        await GroupMessageSender(result.strategy).send(app, result.message, message, group, member)
+from aiohttp.client_exceptions import ClientConnectorError, ClientError    
+    
+api_key = "51ab2ac07ec94b70bfa24911a83cc1ff"
 
 class Getweath():
     __name__ = "Getweath"
 
     @staticmethod
-    async def handle(app: GraiaMiraiApplication, message: MessageChain, group: Group, member: Member):
-        if n := re.match(r'^(.){0,4}天气$', message.asDisplay(), re.I):
-            if n[1]:
-                city_name = str(n[1])
-                return await Getweath.nowweather(city_name)
-            else:
-                return None
-        elif n := re.match(r'^(.){0,4}天气$', message.asDisplay(), re.I):
-            if n[1]:
-                city_name = str(n[1])
-                return await Getweath.thirddayweather(city_name)
-            else:
-                return None
-        else:
-            return None
+    async def handle(name: str):
+        # if n := re.match(r'(.*)天气', message.asDisplay(), re.I):
+        #     if n[1]:
+        #         pass
+        #     else:
+        #         return MessageItem(MessageChain.create([Plain(text="地点是...空气吗？")]), Normal(GroupStrategy()))
+        pass
+        
+        
         
 
     @staticmethod
@@ -57,8 +29,7 @@ class Getweath():
             async with aiohttp.ClientSession() as session:
                 async with session.get(url_weather_api + keyword, params={"location": city_id, "key": api_key}) as res_session:
                     res = await res_session.json()
-                    # print("天气")
-                    # print(res)
+                    print(res)
                     return res, city_name
         else:
             return code, city_name
@@ -70,8 +41,8 @@ class Getweath():
         async with aiohttp.ClientSession() as session:
             async with session.get(url_geoapi + api_type, params={"location": Lname, "key": api_key}) as res_session:
                 res = await res_session.json()
-                # print("地点")
-                # print(res)
+                print(res)
+                
                 if res["code"] == "200":
                     location_id = res["location"][0]["id"]
                     city_name = res["location"][0]["name"]
@@ -90,9 +61,9 @@ class Getweath():
             message.append("数据更新时间：%s\n" % data["updateTime"])
             message.append("链接：%s" % data["fxLink"])
             content = "".join(message)
-            return MessageItem(MessageChain.create([Plain(text=content)]), Normal(GroupStrategy()))
+            return content
         else:
-            return MessageItem(MessageChain.create([Plain(text="错误代码：%s" % data["code"])]), Normal(GroupStrategy()))
+            return "错误代码：%s" % data["code"]
 
     @staticmethod
     async def thirddayweather(city_name: str, keyword: str="3d"):
@@ -110,6 +81,13 @@ class Getweath():
             message.append("数据更新时间：%s\n" % data["updateTime"])
             message.append("链接：%s" % data["fxLink"])
             content = "".join(message)
-            return MessageItem(MessageChain.create([Plain(text=content)]), Normal(GroupStrategy()))
+            return content
         else:
-            return MessageItem(MessageChain.create([Plain(text="错误代码：%s" % data["code"])]), Normal(GroupStrategy()))
+            return "错误代码：%s" % data["code"]
+
+# python test_qweather.py
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    ans = loop.run_until_complete((Getweath.thirddayweather("yingde")))
+    # location_id = ans["location"][0]["id"]
+    print(ans)
